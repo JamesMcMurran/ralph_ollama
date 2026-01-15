@@ -2,79 +2,74 @@
 
 ![Ralph](ralph.webp)
 
-Ralph is an autonomous AI agent loop that runs [Amp](https://ampcode.com) repeatedly until all PRD items are complete. Each iteration is a fresh Amp instance with clean context. Memory persists via git history, `progress.txt`, and `prd.json`.
+Ralph is an autonomous AI agent loop that runs Ollama repeatedly until all PRD items are complete. Each iteration is a fresh model invocation with clean context. Memory persists via git history, `progress.txt`, and `prd.json`.
 
 Based on [Geoffrey Huntley's Ralph pattern](https://ghuntley.com/ralph/).
 
-[Read my in-depth article on how I use Ralph](https://x.com/ryancarson/status/2008548371712135632)
+[Read the in-depth article on the Ralph pattern](https://x.com/ryancarson/status/2008548371712135632)
 
 ## Prerequisites
 
-- [Amp CLI](https://ampcode.com) installed and authenticated
+- [Ollama](https://ollama.ai) installed and running
+- A tool-capable model (e.g., llama3.1, qwen2.5, mistral)
+- Python 3.8+ with pip
 - `jq` installed (`brew install jq` on macOS)
 - A git repository for your project
 
 ## Setup
 
-### Option 1: Copy to your project
+### 1. Install Ollama and pull a model
 
-Copy the ralph files into your project:
+```bash
+# Install Ollama (see https://ollama.ai)
+curl -fsSL https://ollama.ai/install.sh | sh
+
+# Pull a tool-capable model
+ollama pull llama3.1
+```
+
+### 2. Install Python dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Configure environment (optional)
+
+Copy `.env.example` to `.env` and customize:
+
+```bash
+cp .env.example .env
+# Edit .env to set your preferred model and settings
+```
+
+Or export environment variables:
+
+```bash
+export RALPH_MODEL=llama3.1
+export OLLAMA_HOST=http://localhost:11434
+export RALPH_MAX_TOOL_STEPS=50
+```
+
+### 4. Copy to your project (optional)
 
 ```bash
 # From your project root
 mkdir -p scripts/ralph
-cp /path/to/ralph/ralph.sh scripts/ralph/
-cp /path/to/ralph/prompt.md scripts/ralph/
+cp /path/to/ralph_ollama/*.{py,sh,md,txt,example} scripts/ralph/
 chmod +x scripts/ralph/ralph.sh
 ```
-
-### Option 2: Install skills globally
-
-Copy the skills to your Amp config for use across all projects:
-
-```bash
-cp -r skills/prd ~/.config/amp/skills/
-cp -r skills/ralph ~/.config/amp/skills/
-```
-
-### Configure Amp auto-handoff (recommended)
-
-Add to `~/.config/amp/settings.json`:
-
-```json
-{
-  "amp.experimental.autoHandoff": { "context": 90 }
-}
-```
-
-This enables automatic handoff when context fills up, allowing Ralph to handle large stories that exceed a single context window.
 
 ## Workflow
 
 ### 1. Create a PRD
 
-Use the PRD skill to generate a detailed requirements document:
+Create a `prd.json` file with your user stories (see `prd.json.example` for format).
 
-```
-Load the prd skill and create a PRD for [your feature description]
-```
-
-Answer the clarifying questions. The skill saves output to `tasks/prd-[feature-name].md`.
-
-### 2. Convert PRD to Ralph format
-
-Use the Ralph skill to convert the markdown PRD to JSON:
-
-```
-Load the ralph skill and convert tasks/prd-[feature-name].md to prd.json
-```
-
-This creates `prd.json` with user stories structured for autonomous execution.
-
-### 3. Run Ralph
+### 2. Run Ralph
 
 ```bash
-./scripts/ralph/ralph.sh [max_iterations]
+./ralph.sh [max_iterations]
 ```
 
 Default is 10 iterations.
@@ -82,7 +77,7 @@ Default is 10 iterations.
 Ralph will:
 1. Create a feature branch (from PRD `branchName`)
 2. Pick the highest priority story where `passes: false`
-3. Implement that single story
+3. Implement that single story using available tools
 4. Run quality checks (typecheck, tests)
 5. Commit if checks pass
 6. Update `prd.json` to mark story as `passes: true`
@@ -93,13 +88,15 @@ Ralph will:
 
 | File | Purpose |
 |------|---------|
-| `ralph.sh` | The bash loop that spawns fresh Amp instances |
-| `prompt.md` | Instructions given to each Amp instance |
+| `ralph.sh` | The bash loop that spawns fresh Ollama runner instances |
+| `ralph_ollama.py` | Python runner that calls Ollama with tool support |
+| `tools.py` | Tool definitions and executors (read/write files, git, etc.) |
+| `prompt.md` | Instructions given to each model invocation |
 | `prd.json` | User stories with `passes` status (the task list) |
 | `prd.json.example` | Example PRD format for reference |
 | `progress.txt` | Append-only learnings for future iterations |
-| `skills/prd/` | Skill for generating PRDs |
-| `skills/ralph/` | Skill for converting PRDs to JSON |
+| `requirements.txt` | Python dependencies |
+| `.env.example` | Environment variable template |
 | `flowchart/` | Interactive visualization of how Ralph works |
 
 ## Flowchart
@@ -120,10 +117,17 @@ npm run dev
 
 ### Each Iteration = Fresh Context
 
-Each iteration spawns a **new Amp instance** with clean context. The only memory between iterations is:
+Each iteration spawns a **new model invocation** with clean context. The only memory between iterations is:
 - Git history (commits from previous iterations)
 - `progress.txt` (learnings and context)
 - `prd.json` (which stories are done)
+
+### Tool-Capable Models Required
+
+Ralph uses Ollama's function calling support to provide tools for file I/O, git operations, and command execution. You need a model that supports tool calling, such as:
+- llama3.1 (recommended)
+- qwen2.5
+- mistral
 
 ### Small Tasks
 
@@ -142,7 +146,7 @@ Too big (split these):
 
 ### AGENTS.md Updates Are Critical
 
-After each iteration, Ralph updates the relevant `AGENTS.md` files with learnings. This is key because Amp automatically reads these files, so future iterations (and future human developers) benefit from discovered patterns, gotchas, and conventions.
+After each iteration, Ralph updates the relevant `AGENTS.md` files with learnings. Future iterations automatically reference these files to understand discovered patterns, gotchas, and conventions.
 
 Examples of what to add to AGENTS.md:
 - Patterns discovered ("this codebase uses X for Y")
@@ -155,10 +159,6 @@ Ralph only works if there are feedback loops:
 - Typecheck catches type errors
 - Tests verify behavior
 - CI must stay green (broken code compounds across iterations)
-
-### Browser Verification for UI Stories
-
-Frontend stories must include "Verify in browser using dev-browser skill" in acceptance criteria. Ralph will use the dev-browser skill to navigate to the page, interact with the UI, and confirm changes work.
 
 ### Stop Condition
 
@@ -193,4 +193,5 @@ Ralph automatically archives previous runs when you start a new feature (differe
 ## References
 
 - [Geoffrey Huntley's Ralph article](https://ghuntley.com/ralph/)
-- [Amp documentation](https://ampcode.com/manual)
+- [Ollama documentation](https://ollama.ai)
+- [Ollama function calling](https://ollama.ai/blog/tool-support)

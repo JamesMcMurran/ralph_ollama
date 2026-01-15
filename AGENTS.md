@@ -2,7 +2,7 @@
 
 ## Overview
 
-Ralph is an autonomous AI agent loop that runs Amp repeatedly until all PRD items are complete. Each iteration is a fresh Amp instance with clean context.
+Ralph is an autonomous AI agent loop that runs Ollama repeatedly until all PRD items are complete. Each iteration is a fresh model invocation with clean context.
 
 ## Commands
 
@@ -15,14 +15,28 @@ cd flowchart && npm run build
 
 # Run Ralph (from your project that has prd.json)
 ./ralph.sh [max_iterations]
+
+# Test Ollama connectivity
+python3 ralph_ollama.py --help
 ```
 
 ## Key Files
 
-- `ralph.sh` - The bash loop that spawns fresh Amp instances
-- `prompt.md` - Instructions given to each Amp instance
+- `ralph.sh` - The bash loop that spawns fresh Ollama runner instances
+- `ralph_ollama.py` - Python runner that calls Ollama with tool support
+- `tools.py` - Tool definitions and executors
+- `prompt.md` - Instructions given to each model invocation
 - `prd.json.example` - Example PRD format
+- `requirements.txt` - Python dependencies
+- `.env.example` - Environment variable template
 - `flowchart/` - Interactive React Flow diagram explaining how Ralph works
+
+## Setup
+
+1. Install Ollama: `curl -fsSL https://ollama.ai/install.sh | sh`
+2. Pull a tool-capable model: `ollama pull llama3.1`
+3. Install Python deps: `pip install -r requirements.txt`
+4. Optionally set env vars: `export RALPH_MODEL=llama3.1`
 
 ## Flowchart
 
@@ -37,7 +51,8 @@ npm run dev
 
 ## Patterns
 
-- Each iteration spawns a fresh Amp instance with clean context
+- Each iteration spawns a fresh model invocation with clean context
 - Memory persists via git history, `progress.txt`, and `prd.json`
 - Stories should be small enough to complete in one context window
 - Always update AGENTS.md with discovered patterns for future iterations
+- Tool calling requires a compatible model (llama3.1, qwen2.5, mistral, etc.)

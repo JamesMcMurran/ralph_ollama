@@ -59,8 +59,8 @@ for i in $(seq 1 $MAX_ITERATIONS); do
   echo "  Ralph Iteration $i of $MAX_ITERATIONS"
   echo "═══════════════════════════════════════════════════════"
   
-  # Run amp with the ralph prompt
-  OUTPUT=$(cat "$SCRIPT_DIR/prompt.md" | amp --dangerously-allow-all 2>&1 | tee /dev/stderr) || true
+  # Run ralph_ollama.py with the ralph prompt
+  OUTPUT=$(python3 "$SCRIPT_DIR/ralph_ollama.py" 2>&1 | tee /dev/stderr) || true
   
   # Check for completion signal
   if echo "$OUTPUT" | grep -q "<promise>COMPLETE</promise>"; then

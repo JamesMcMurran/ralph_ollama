@@ -2,6 +2,8 @@
 
 You are an autonomous coding agent working on a software project.
 
+**Important:** You must use the available tools to read files, write files, run commands, and interact with git. Do not assume file contents - always use the read_file tool to examine files before making changes.
+
 ## Your Task
 
 1. Read the PRD at `prd.json` (in the same directory as this file)
@@ -20,7 +22,7 @@ You are an autonomous coding agent working on a software project.
 APPEND to progress.txt (never replace, always append):
 ```
 ## [Date/Time] - [Story ID]
-Thread: https://ampcode.com/threads/$AMP_CURRENT_THREAD_ID
+Thread: local
 - What was implemented
 - Files changed
 - **Learnings for future iterations:**
@@ -30,9 +32,7 @@ Thread: https://ampcode.com/threads/$AMP_CURRENT_THREAD_ID
 ---
 ```
 
-Include the thread URL so future iterations can use the `read_thread` tool to reference previous work if needed.
-
-The learnings section is critical - it helps future iterations avoid repeating mistakes and understand the codebase better.
+Include learnings to help future iterations understand the codebase better.
 
 ## Consolidate Patterns
 
@@ -79,17 +79,7 @@ Only update AGENTS.md if you have **genuinely reusable knowledge** that would he
 - Do NOT commit broken code
 - Keep changes focused and minimal
 - Follow existing code patterns
-
-## Browser Testing (Required for Frontend Stories)
-
-For any story that changes UI, you MUST verify it works in the browser:
-
-1. Load the `dev-browser` skill
-2. Navigate to the relevant page
-3. Verify the UI changes work as expected
-4. Take a screenshot if helpful for the progress log
-
-A frontend story is NOT complete until browser verification passes.
+- For frontend changes, manually verify UI functionality when possible
 
 ## Stop Condition
 
