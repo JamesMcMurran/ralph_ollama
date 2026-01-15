@@ -16,6 +16,17 @@ cd flowchart && npm run build
 # Run Ralph (from your project that has prd.json)
 ./ralph.sh [max_iterations]
 
+# Run health check
+python3 ralph_ollama.py --health
+
+# Use remote Ollama host
+export OLLAMA_HOST=http://your-server:11434
+./ralph.sh
+
+# Or configure in .env file
+echo "OLLAMA_HOST=http://your-server:11434" >> .env
+./ralph.sh
+
 # Test Ollama connectivity
 python3 ralph_ollama.py --help
 ```

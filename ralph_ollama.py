@@ -9,6 +9,13 @@ import os
 import sys
 from pathlib import Path
 
+# Load environment variables from .env file if present
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # python-dotenv is optional
+
 try:
     from openai import OpenAI
 except ImportError:

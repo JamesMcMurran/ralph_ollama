@@ -51,7 +51,36 @@ export OLLAMA_HOST=http://localhost:11434
 export RALPH_MAX_TOOL_STEPS=50
 ```
 
-### 4. Copy to your project (optional)
+**Using a remote Ollama host:**
+
+To use a remote Ollama server, set the `OLLAMA_HOST` in your `.env` file:
+
+```bash
+# Local Ollama
+OLLAMA_HOST=http://localhost:11434
+
+# Remote Ollama (by IP)
+OLLAMA_HOST=http://192.168.1.100:11434
+
+# Remote Ollama (by domain)
+OLLAMA_HOST=https://ollama.example.com
+```
+
+Make sure your remote Ollama server is accessible and has the required model pulled.
+
+📖 **See [REMOTE_SETUP.md](REMOTE_SETUP.md) for detailed instructions on setting up and securing a remote Ollama server.**
+
+### 4. Verify setup (optional but recommended)
+
+```bash
+# Run health check to verify Ollama connectivity and model availability
+python3 ralph_ollama.py --health
+
+# Or specify a custom host
+python3 ralph_ollama.py --host http://your-server:11434 --health
+```
+
+### 5. Copy to your project (optional)
 
 ```bash
 # From your project root
@@ -96,7 +125,8 @@ Ralph will:
 | `prd.json.example` | Example PRD format for reference |
 | `progress.txt` | Append-only learnings for future iterations |
 | `requirements.txt` | Python dependencies |
-| `.env.example` | Environment variable template |
+| `.env` / `.env.example` | Environment configuration (Ollama host, model, etc.) |
+| `REMOTE_SETUP.md` | Guide for using Ralph with a remote Ollama server |
 | `flowchart/` | Interactive visualization of how Ralph works |
 
 ## Flowchart
