@@ -24,6 +24,7 @@ except ImportError:
     sys.exit(1)
 
 from tools import TOOL_SCHEMAS, ToolExecutor
+from tool_parser import extract_tool_calls, deduplicate_tool_calls, has_progress_markers
 
 
 def load_prompt(script_dir: Path) -> str:
@@ -173,8 +174,9 @@ def main():
         {"role": "user", "content": "Begin. Follow the system instructions."}
     ]
     
-    # Tool calling loop
+    # Tool calling loop with deduplication
     step_count = 0
+    recent_tool_calls = []  # Track recent calls to prevent loops
     
     while step_count < args.max_steps:
         # Make the API call with tools
@@ -187,12 +189,46 @@ def main():
             )
             
             message = response.choices[0].message
+            response_text = message.content or ""
             
-            # Add assistant message to conversation
-            messages.append({
+            # Extract tool calls (handles both structured and text-embedded)
+            tool_calls, reasoning_text = extract_tool_calls(message, response_text)
+            
+            # Print reasoning if present
+            if reasoning_text and reasoning_text.strip():
+                print(f"\n💭 {reasoning_text}", file=sys.stderr)
+            
+            # Deduplicate tool calls against recent history
+            if tool_calls:
+                original_count = len(tool_calls)
+                tool_calls = deduplicate_tool_calls(tool_calls, recent_tool_calls[-3:])
+                
+                if len(tool_calls) < original_count:
+                    print(f"\n⚠️  Filtered {original_count - len(tool_calls)} duplicate tool call(s)", file=sys.stderr)
+            
+            # If no tool calls, we're done
+            if not tool_calls:
+                # Check if we're stuck asking for the same thing
+                if not has_progress_markers(messages):
+                    print("\n⚠️  No tool calls and no recent progress detected", file=sys.stderr)
+                
+                # Print final assistant message
+                if response_text:
+                    print(response_text)
+                break
+            
+            # Execute tool calls
+            print(f"\n[Step {step_count + 1}] Executing {len(tool_calls)} tool call(s)...", file=sys.stderr)
+            
+            # Build assistant message with tool calls for conversation history
+            assistant_msg = {
                 "role": "assistant",
-                "content": message.content or "",
-                "tool_calls": [
+                "content": reasoning_text
+            }
+            
+            # Add tool_calls if using structured format
+            if hasattr(message, 'tool_calls') and message.tool_calls:
+                assistant_msg["tool_calls"] = [
                     {
                         "id": tc.id,
                         "type": "function",
@@ -201,41 +237,41 @@ def main():
                             "arguments": tc.function.arguments
                         }
                     }
-                    for tc in (message.tool_calls or [])
+                    for tc in message.tool_calls
                 ]
-            })
             
-            # If no tool calls, we're done
-            if not message.tool_calls:
-                # Print final assistant message
-                if message.content:
-                    print(message.content)
-                break
+            messages.append(assistant_msg)
             
-            # Execute tool calls
-            print(f"\n[Step {step_count + 1}] Executing {len(message.tool_calls)} tool call(s)...", file=sys.stderr)
-            
-            for tool_call in message.tool_calls:
-                tool_name = tool_call.function.name
-                arguments = json.loads(tool_call.function.arguments)
+            for tool_call in tool_calls:
+                tool_name = tool_call["name"]
+                arguments = tool_call["arguments"]
+                tool_id = tool_call.get("id", f"call_{step_count}")
                 
                 print(f"  → {tool_name}({json.dumps(arguments, indent=2)})", file=sys.stderr)
                 
                 # Execute the tool
                 result = tool_executor.execute(tool_name, arguments)
                 
-                # Add tool result to messages
-                messages.append({
+                # Track this call to prevent duplicates
+                recent_tool_calls.append((tool_name, arguments))
+                
+                # Add tool result to messages (visible to model)
+                tool_result_msg = {
                     "role": "tool",
-                    "tool_call_id": tool_call.id,
-                    "content": result
-                })
+                    "tool_call_id": tool_id,
+                    "content": f"TOOL RESULT ({tool_name}):\n{result}"
+                }
+                messages.append(tool_result_msg)
                 
                 # Print abbreviated result
                 result_preview = result[:200] + "..." if len(result) > 200 else result
-                print(f"     Result: {result_preview}", file=sys.stderr)
+                print(f"     ✓ {result_preview}", file=sys.stderr)
             
             step_count += 1
+            
+            # Keep only recent call history (prevent unbounded growth)
+            if len(recent_tool_calls) > 10:
+                recent_tool_calls = recent_tool_calls[-10:]
             
         except Exception as e:
             print(f"\nError during execution: {e}", file=sys.stderr)

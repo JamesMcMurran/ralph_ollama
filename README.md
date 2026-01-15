@@ -120,6 +120,7 @@ Ralph will:
 | `ralph.sh` | The bash loop that spawns fresh Ollama runner instances |
 | `ralph_ollama.py` | Python runner that calls Ollama with tool support |
 | `tools.py` | Tool definitions and executors (read/write files, git, etc.) |
+| `tool_parser.py` | Detects and parses tool calls from model responses |
 | `prompt.md` | Instructions given to each model invocation |
 | `prd.json` | User stories with `passes` status (the task list) |
 | `prd.json.example` | Example PRD format for reference |
@@ -127,6 +128,7 @@ Ralph will:
 | `requirements.txt` | Python dependencies |
 | `.env` / `.env.example` | Environment configuration (Ollama host, model, etc.) |
 | `REMOTE_SETUP.md` | Guide for using Ralph with a remote Ollama server |
+| `TOOL_EXECUTION.md` | Deep dive into how tool execution works |
 | `flowchart/` | Interactive visualization of how Ralph works |
 
 ## Flowchart
@@ -158,6 +160,8 @@ Ralph uses Ollama's function calling support to provide tools for file I/O, git 
 - llama3.1 (recommended)
 - qwen2.5
 - mistral
+
+**Note**: Ralph includes robust tool detection that works even if models embed tool calls in text rather than using structured formats. See [TOOL_EXECUTION.md](TOOL_EXECUTION.md) for details.
 
 ### Small Tasks
 

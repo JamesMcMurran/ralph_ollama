@@ -49,6 +49,36 @@ echo ""
 
 # Check 3: Python dependencies
 echo "3️⃣  Checking Python dependencies..."
+if python3 -c "import openai; from dotenv import load_dotenv" 2>/dev/null; then
+    echo "   ✅ Python dependencies installed"
+else
+    echo "   ❌ Python dependencies missing"
+    echo ""
+    echo "   Install with:"
+    echo "   pip install -r requirements.txt"
+    exit 1
+fi
+echo ""
+
+# Check 4: Tool parser functionality
+echo "4️⃣  Testing tool parser..."
+TEST_OUTPUT=$(python3 -c "
+from tool_parser import detect_tool_calls_in_text
+calls = detect_tool_calls_in_text('{\"name\": \"read_file\", \"arguments\": {\"path\": \"test.txt\"}}')
+assert len(calls) == 1
+assert calls[0]['name'] == 'read_file'
+print('OK')
+" 2>&1)
+
+if [ "$TEST_OUTPUT" = "OK" ]; then
+    echo "   ✅ Tool parser working"
+else
+    echo "   ❌ Tool parser test failed"
+    echo "   Output: $TEST_OUTPUT"
+    exit 1
+fi
+echo ""
+echo "3️⃣  Checking Python dependencies..."
 if python3 -c "import openai; import dotenv" 2>/dev/null; then
     echo "   ✅ Python dependencies installed"
 else

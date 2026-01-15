@@ -36,6 +36,7 @@ python3 ralph_ollama.py --help
 - `ralph.sh` - The bash loop that spawns fresh Ollama runner instances
 - `ralph_ollama.py` - Python runner that calls Ollama with tool support
 - `tools.py` - Tool definitions and executors
+- `tool_parser.py` - Detects and parses tool calls from model responses
 - `prompt.md` - Instructions given to each model invocation
 - `prd.json.example` - Example PRD format
 - `requirements.txt` - Python dependencies
@@ -67,3 +68,15 @@ npm run dev
 - Stories should be small enough to complete in one context window
 - Always update AGENTS.md with discovered patterns for future iterations
 - Tool calling requires a compatible model (llama3.1, qwen2.5, mistral, etc.)
+
+### Tool Execution Flow
+
+Ralph implements robust tool execution:
+
+1. **Detection**: Extracts tool calls from model responses (structured or text-embedded)
+2. **Deduplication**: Prevents infinite loops by filtering recently executed calls
+3. **Execution**: Runs tools via `ToolExecutor` and returns results
+4. **Injection**: Adds tool results back to conversation with `TOOL RESULT` prefix
+5. **Progress tracking**: Monitors for real progress (commits, file writes, etc.)
+
+This allows Ollama models (which lack native tool-call channels) to effectively use tools.
