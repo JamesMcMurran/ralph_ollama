@@ -1,5 +1,24 @@
 # Ralph Ollama - Quick Reference
 
+## ⚠️ Important: Virtual Environment Required
+
+**Always run Ralph from within a Python virtual environment:**
+
+```bash
+# First time setup
+python3 -m venv .venv
+source .venv/bin/activate  # macOS/Linux
+# or: .venv\Scripts\activate  # Windows
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Now run Ralph
+./ralph.sh
+```
+
+**Why?** Ralph spawns fresh Python processes. Without a venv, they won't find installed packages and you'll see: `Error: openai package not installed`
+
 ## Installation
 
 ```bash

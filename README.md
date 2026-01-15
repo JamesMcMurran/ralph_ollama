@@ -213,6 +213,34 @@ cat progress.txt
 git log --oneline -10
 ```
 
+### Common Issues
+
+**"Error: openai package not installed" after some iterations**
+
+This happens when the Python virtual environment isn't being used. Make sure to run Ralph from within your virtual environment:
+
+```bash
+# Activate your venv first
+source .venv/bin/activate  # or your venv path
+
+# Then run Ralph
+./ralph.sh
+```
+
+Or set the `PYTHON` environment variable:
+
+```bash
+export PYTHON=/path/to/your/venv/bin/python
+./ralph.sh
+```
+
+**Model uses placeholders like `<branchName>` instead of real values**
+
+The model should read files first to get actual values. This is addressed in `prompt.md` with explicit examples. If it persists:
+- Check that tool results are being properly injected (you should see `TOOL RESULT` in output)
+- Try a different model that better follows instructions
+- Reduce context complexity in the PRD
+
 ## Customizing prompt.md
 
 Edit `prompt.md` to customize Ralph's behavior for your project:

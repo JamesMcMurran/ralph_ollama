@@ -80,3 +80,21 @@ Ralph implements robust tool execution:
 5. **Progress tracking**: Monitors for real progress (commits, file writes, etc.)
 
 This allows Ollama models (which lack native tool-call channels) to effectively use tools.
+
+### Real-World Validation (Jan 15, 2026)
+
+Tested with actual run on task priority system PRD:
+- ✅ **30+ tool calls executed** across 6 iterations
+- ✅ **Files created** (migrations/01_add_tasks_table.sql)
+- ✅ **Branches created** (ralph/task-priority)
+- ✅ **Commits made** (feat: US-001 - Add priority field to database)
+- ✅ **Deduplication working** (filtered 1 duplicate call)
+- ✅ **Progress tracking** (detected when stuck without progress)
+
+**Key Learning**: Always run from within Python virtual environment:
+```bash
+source .venv/bin/activate
+./ralph.sh
+```
+
+See [RUN_ANALYSIS.md](RUN_ANALYSIS.md) for detailed analysis of the test run.

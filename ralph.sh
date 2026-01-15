@@ -4,6 +4,22 @@
 
 set -e
 
+# Check for virtual environment
+if [ -z "$VIRTUAL_ENV" ] && [ -z "$PYTHON" ]; then
+  echo "⚠️  Warning: No Python virtual environment detected"
+  echo "   Consider activating your venv first:"
+  echo "   source .venv/bin/activate  # or your venv path"
+  echo ""
+  echo "   Or set PYTHON environment variable:"
+  echo "   export PYTHON=/path/to/venv/bin/python"
+  echo ""
+  read -p "   Continue anyway? (y/N) " -n 1 -r
+  echo
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    exit 1
+  fi
+fi
+
 MAX_ITERATIONS=${1:-10}
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PRD_FILE="$SCRIPT_DIR/prd.json"
@@ -59,8 +75,11 @@ for i in $(seq 1 $MAX_ITERATIONS); do
   echo "  Ralph Iteration $i of $MAX_ITERATIONS"
   echo "═══════════════════════════════════════════════════════"
   
+  # Detect and use the active Python (respects virtual environments)
+  PYTHON_CMD="${PYTHON:-python3}"
+  
   # Run ralph_ollama.py with the ralph prompt
-  OUTPUT=$(python3 "$SCRIPT_DIR/ralph_ollama.py" 2>&1 | tee /dev/stderr) || true
+  OUTPUT=$("$PYTHON_CMD" "$SCRIPT_DIR/ralph_ollama.py" 2>&1 | tee /dev/stderr) || true
   
   # Check for completion signal
   if echo "$OUTPUT" | grep -q "<promise>COMPLETE</promise>"; then
