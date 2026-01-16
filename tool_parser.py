@@ -100,7 +100,11 @@ def detect_tool_calls_in_text(text: str) -> List[Dict[str, Any]]:
         common_tools = [
             'read_file', 'write_file', 'list_dir', 'grep',
             'git_status', 'git_diff', 'git_commit_all', 'git_current_branch',
-            'run_cmd', 'mkdir', 'remove'
+            'git_checkout', 'git_create_branch',
+            'run_cmd', 'mkdir', 'remove', 'apply_patch',
+            'run_tests', 'update_prd', 'append_progress', 'get_next_story',
+            'docker_build', 'docker_compose_up', 'docker_compose_down',
+            'docker_exec', 'docker_logs', 'docker_ps', 'docker_test'
         ]
         
         if tool_name in common_tools:

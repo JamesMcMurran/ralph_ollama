@@ -38,7 +38,9 @@ python3 ralph_ollama.py --help
 - `tools.py` - Tool definitions and executors
 - `tool_parser.py` - Detects and parses tool calls from model responses
 - `prompt.md` - Instructions given to each model invocation
+- `prd.json` - Current PRD (copy from prd_todo_app.json for a fresh run)
 - `prd.json.example` - Example PRD format
+- `prd_todo_app.json` - Complete Todo web app PRD (6 user stories)
 - `requirements.txt` - Python dependencies
 - `.env.example` - Environment variable template
 - `flowchart/` - Interactive React Flow diagram explaining how Ralph works
@@ -49,6 +51,20 @@ python3 ralph_ollama.py --help
 2. Pull a tool-capable model: `ollama pull llama3.1`
 3. Install Python deps: `pip install -r requirements.txt`
 4. Optionally set env vars: `export RALPH_MODEL=llama3.1`
+
+## Running the Todo App Example
+
+```bash
+# 1. Setup for Docker Todo app
+./setup_todo_run.sh
+
+# 2. Run Ralph (10-15 iterations should be enough)
+./ralph.sh 15
+```
+
+This will build custom Docker images (Nginx, PHP-FPM, MySQL) and deploy a complete Todo web app running in Docker-in-Docker.
+
+After completion, access the app at: http://localhost:8080
 
 ## Flowchart
 
@@ -80,6 +96,39 @@ Ralph implements robust tool execution:
 5. **Progress tracking**: Monitors for real progress (commits, file writes, etc.)
 
 This allows Ollama models (which lack native tool-call channels) to effectively use tools.
+
+### Available Tools
+
+**File & Directory:**
+- `read_file(path)` - Read file contents
+- `write_file(path, content)` - Write/create files
+- `list_dir(path)` - List directory contents
+- `mkdir(path)` - Create directories
+- `remove(path)` - Remove files/directories
+
+**Git:**
+- `git_status()` - Get git status
+- `git_diff(cached)` - Get git diff
+- `git_current_branch()` - Get current branch name
+- `git_checkout(branch)` - Checkout branch
+- `git_create_branch(branch, from_ref)` - Create new branch
+- `git_commit_all(message)` - Stage all and commit
+
+**Docker (DinD):**
+- `docker_build(tag, context, dockerfile)` - Build Docker image
+- `docker_compose_up(compose_file, detach, build)` - Start services
+- `docker_compose_down(compose_file, volumes)` - Stop services
+- `docker_exec(container, command)` - Run command in container
+- `docker_logs(container, tail)` - Get container logs
+- `docker_ps(all)` - List containers
+- `docker_test(test_command, container)` - Run test in DinD
+
+**Progress:**
+- `get_next_story` - Get highest-priority incomplete story from prd.json
+- `run_cmd(command, cwd)` - Run shell commands
+- `run_tests(command)` - Run tests with longer timeout
+- `update_prd(story_id, passes, notes)` - Mark story complete
+- `append_progress(story_id, summary, files_changed, learnings)` - Log progress
 
 ### Real-World Validation (Jan 15, 2026)
 
