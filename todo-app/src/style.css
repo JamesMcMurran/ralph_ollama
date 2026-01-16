@@ -1,0 +1,12 @@
+body {
+    font-family: Arial, sans-serif;
+}
+
+h1 {
+    color: #333;
+}
+
+div#app {
+    margin: 20px auto;
+    width: 80%;
+}
