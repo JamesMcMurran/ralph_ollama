@@ -1,7 +1,9 @@
 {"story_id":"US-002","file":"todo-app/src/api.php","code":"<?php\nrequire_once 'db.php';\nheader('Content-Type: application/json');\n$method = $_SERVER['REQUEST_METHOD'];\nif ($method === 'GET') {\n  $result = $conn->query("SELECT * FROM todos");\n  $todos = [];
   while ($row = $result->fetch_assoc()) { $todos[] = $row; }
   echo json_encode($todos);
-} elseif ($method === 'POST') {\n  $data = json_decode(file_get_contents('php://input'), true);
+} elseif ($method === 'POST') {
+  $data = json_decode(file_get_contents('php://input'), true);
   $text = $conn->real_escape_string($data['text']);
   $conn->query("INSERT INTO todos (text, user_id) VALUES ('$text', 'user')");
-  echo json_encode(['id' => $conn->insert_id]);\n}\n"}
+  echo json_encode(['id' => $conn->insert_id]);
+}\n"}
