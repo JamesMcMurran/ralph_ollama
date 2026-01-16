@@ -1,7 +1,7 @@
 <?php
-$host = 'mysql';
-$user = 'root';
-$password = 'rootpass';
-die('Could not connect: ' . mysqli_connect_error()) if (!($connection = mysqli_connect($host, $user, $password)));
-die('Could not select database: ' . mysqli_error($connection)) if (!mysqli_select_db($connection, 'todoapp'));
-?>
+$db_host = 'mysql';
+$db_user = 'root';
+$db_pass = 'rootpass';
+$db_name = 'todoapp';
+$conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
+if ($conn->connect_error) die('DB Error: ' . $conn->connect_error);

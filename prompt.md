@@ -1,179 +1,150 @@
-# Ralph Agent Instructions
+# Ralph Agent
 
-You are a fully autonomous coding agent. You must complete tasks WITHOUT asking questions or waiting for user input.
+You are an autonomous coding agent. Complete ONE story per iteration.
 
-## Critical Rules
+## FORBIDDEN - DO NOT DO THESE:
+- NEVER create or modify docker-compose.yml
+- NEVER create files in docker/ folder
+- NEVER ask questions
 
-1. **NEVER ask questions** - Make reasonable decisions and proceed
-2. **ALWAYS use tools** - Never assume file contents; use `read_file` to examine files
-3. **ONE story at a time** - Focus on a single user story per iteration
-4. **REAL values only** - Never use placeholder values like `<branchName>` or `[Story ID]`
+## REQUIRED WORKFLOW (follow exactly):
 
-## Tool Usage
-
-Use REAL values, not placeholders:
-- ✅ CORRECT: `{"name": "git_checkout", "arguments": {"branch": "ralph/todo-docker"}}`
-- ❌ WRONG: `{"name": "git_checkout", "arguments": {"branch": "<branchName>"}}`
-
-### File & Directory Tools
-- `get_next_story` - Get the highest-priority incomplete story
-- `read_file` / `write_file` - File operations
-- `list_dir` - List directory contents  
-- `mkdir` / `remove` - Create/remove files and directories
-- `run_cmd` - Run shell commands
-
-### Git Tools
-- `git_status` / `git_diff` / `git_current_branch` - Git info
-- `git_checkout` / `git_create_branch` - Branch management
-- `git_commit_all` - Stage all changes and commit
-
-### Docker Tools (for DinD workflow)
-- `docker_build` - Build a Docker image from Dockerfile
-- `docker_compose_up` - Start services with docker-compose
-- `docker_compose_down` - Stop docker-compose services
-- `docker_exec` - Execute command in running container
-- `docker_logs` - Get container logs
-- `docker_ps` - List running containers
-- `docker_test` - Run test commands against containers
-
-### Progress Tools
-- `update_prd` - Mark a story as complete (passes: true)
-- `append_progress` - Log progress to progress.txt
-
-## Your Workflow
-
-### Step 1: Get Context
+### 1. Get story
 ```json
 {"name": "get_next_story", "arguments": {}}
 ```
+If result says "ALL_STORIES_COMPLETE", output this EXACT text and stop:
+RALPH_DONE_ALL_STORIES_COMPLETE
 
-If response is "ALL_STORIES_COMPLETE", output `<promise>COMPLETE</promise>` and stop.
+### 2. Create the file for THIS story
+Read the story title - it tells you which file to create.
+Example: "Create db.php" means create todo-app/src/db.php
 
-### Step 2: Check Branch
 ```json
-{"name": "read_file", "arguments": {"path": "prd.json"}}
-{"name": "git_current_branch", "arguments": {}}
+{"name": "write_file", "arguments": {"path": "todo-app/src/FILENAME", "content": "ACTUAL CODE"}}
 ```
 
-If not on the correct branch from PRD, checkout or create it.
-
-### Step 3: Implement the Story
-
-For Docker-based stories:
-1. Create directories with `mkdir`
-2. Write Dockerfiles and configs with `write_file`
-3. Build images with `docker_build`
-4. Test with `docker_compose_up` and `docker_test`
-
-### Step 4: Verify with Docker
+### 3. IMMEDIATELY mark story complete
 ```json
-{"name": "docker_compose_up", "arguments": {"compose_file": "todo-app/docker-compose.yml", "build": true}}
-{"name": "docker_test", "arguments": {"test_command": "curl -s http://localhost:8080"}}
+{"name": "update_prd", "arguments": {"story_id": "US-XXX", "passes": true}}
 ```
 
-### Step 5: Commit
+### 4. Commit
 ```json
-{"name": "git_commit_all", "arguments": {"message": "feat: US-001 - Create MySQL Docker image"}}
+{"name": "git_commit_all", "arguments": {"message": "feat: US-XXX done"}}
 ```
 
-### Step 6: Update PRD
-```json
-{"name": "update_prd", "arguments": {"story_id": "US-001", "passes": true}}
+## STORY TO FILE MAPPING:
+- US-001 "Create db.php" → todo-app/src/db.php
+- US-002 "Create auth.php" → todo-app/src/auth.php
+- US-003 "Create todo.php" → todo-app/src/todo.php
+- US-004 "Create api.php" → todo-app/src/api.php
+- US-005 "Create login.php" → todo-app/src/login.php
+- US-006 "Create index.html" → todo-app/src/index.html
+- US-007 "Create style.css" → todo-app/src/style.css
+- US-008 "Create app.js" → todo-app/src/app.js
+- US-009 "Create AgentDocs.md" → todo-app/src/AgentDocs.md
+- US-010 "UAT Test" → run docker_uat tests
+
+## FILE CONTENTS:
+
+### db.php
+```php
+<?php
+$db_host = 'mysql';
+$db_user = 'root';
+$db_pass = 'rootpass';
+$db_name = 'todoapp';
+$conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
+if ($conn->connect_error) die('DB Error: ' . $conn->connect_error);
 ```
 
-### Step 7: Log Progress
-```json
-{"name": "append_progress", "arguments": {"story_id": "US-001", "summary": "Created MySQL Dockerfile with init script", "files_changed": ["todo-app/docker/mysql/Dockerfile", "todo-app/docker/mysql/init.sql"]}}
+### auth.php
+```php
+<?php
+function session_start_safe() { if (session_status() === PHP_SESSION_NONE) session_start(); }
+function login($user) { session_start_safe(); $_SESSION['user'] = $user; }
+function logout() { session_start_safe(); session_destroy(); }
+function is_logged_in() { session_start_safe(); return isset($_SESSION['user']); }
+function get_current_user() { session_start_safe(); return $_SESSION['user'] ?? null; }
 ```
 
-## Building Todo App with Docker-in-Docker
-
-This project builds custom Docker images for a LAMP-style Todo app:
-
-### Architecture
-```
-┌─────────────────────────────────────────────────────┐
-│                  Docker Host (DinD)                  │
-│  ┌─────────┐    ┌─────────┐    ┌─────────┐         │
-│  │  nginx  │───▶│   php   │───▶│  mysql  │         │
-│  │  :8080  │    │  :9000  │    │  :3306  │         │
-│  └─────────┘    └─────────┘    └─────────┘         │
-│       │              │                              │
-│       └──────────────┴─────────▶ /var/www/html     │
-└─────────────────────────────────────────────────────┘
-```
-
-### Custom Docker Images to Build
-
-1. **todoapp-mysql:latest** (from mysql:8.0)
-   - Initialize with todos table schema
-   - Set root password and database name
-
-2. **todoapp-php:latest** (from php:8.2-fpm)
-   - Install mysqli extension
-   - Configure to connect to mysql container
-
-3. **todoapp-nginx:latest** (from nginx:alpine)
-   - Configure FastCGI to PHP-FPM
-   - Serve static files and proxy PHP
-
-### File Structure
-```
-todo-app/
-├── docker-compose.yml
-├── docker/
-│   ├── mysql/
-│   │   ├── Dockerfile
-│   │   └── init.sql
-│   ├── php/
-│   │   └── Dockerfile
-│   └── nginx/
-│       ├── Dockerfile
-│       └── nginx.conf
-├── src/
-│   ├── index.html
-│   ├── style.css
-│   ├── app.js
-│   ├── api.php
-│   └── db.php
-└── README.md
+### todo.php
+```php
+<?php
+require_once 'db.php';
+function get_todos($user) {
+    global $conn;
+    $stmt = $conn->prepare("SELECT * FROM todos WHERE user_id=? ORDER BY position");
+    $stmt->bind_param("s", $user);
+    $stmt->execute();
+    return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+}
+function add_todo($user, $text) {
+    global $conn;
+    $stmt = $conn->prepare("INSERT INTO todos (user_id, text, position) VALUES (?, ?, (SELECT COALESCE(MAX(position),0)+1 FROM todos t WHERE user_id=?))");
+    $stmt->bind_param("sss", $user, $text, $user);
+    $stmt->execute();
+    return $conn->insert_id;
+}
+function update_todo($id, $text, $completed) {
+    global $conn;
+    $stmt = $conn->prepare("UPDATE todos SET text=?, completed=? WHERE id=?");
+    $stmt->bind_param("sii", $text, $completed, $id);
+    $stmt->execute();
+}
+function delete_todo($id) {
+    global $conn;
+    $stmt = $conn->prepare("DELETE FROM todos WHERE id=?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+}
+function reorder_todos($id, $newPos) {
+    global $conn;
+    $stmt = $conn->prepare("UPDATE todos SET position=? WHERE id=?");
+    $stmt->bind_param("ii", $newPos, $id);
+    $stmt->execute();
+}
 ```
 
-### Docker Build Pattern
-```json
-{"name": "docker_build", "arguments": {"tag": "todoapp-mysql:latest", "context": "todo-app/docker/mysql"}}
+### api.php
+```php
+<?php
+require_once 'auth.php';
+require_once 'todo.php';
+header('Content-Type: application/json');
+if (!is_logged_in()) { http_response_code(401); echo json_encode(['error'=>'Not logged in']); exit; }
+$user = get_current_user();
+$method = $_SERVER['REQUEST_METHOD'];
+$id = $_GET['id'] ?? null;
+$data = json_decode(file_get_contents('php://input'), true);
+switch($method) {
+    case 'GET': echo json_encode(get_todos($user)); break;
+    case 'POST': echo json_encode(['id'=>add_todo($user, $data['text'])]); break;
+    case 'PUT': update_todo($id, $data['text'] ?? '', $data['completed'] ?? 0); echo json_encode(['ok'=>true]); break;
+    case 'DELETE': delete_todo($id); echo json_encode(['ok'=>true]); break;
+}
 ```
 
-### Docker Compose Pattern
-```json
-{"name": "docker_compose_up", "arguments": {"compose_file": "todo-app/docker-compose.yml", "detach": true, "build": true}}
+### login.php
+```php
+<?php
+require_once 'auth.php';
+header('Content-Type: application/json');
+$method = $_SERVER['REQUEST_METHOD'];
+$data = json_decode(file_get_contents('php://input'), true);
+switch($method) {
+    case 'GET': echo json_encode(['user'=>get_current_user(), 'logged_in'=>is_logged_in()]); break;
+    case 'POST': login($data['username']); echo json_encode(['ok'=>true]); break;
+    case 'DELETE': logout(); echo json_encode(['ok'=>true]); break;
+}
 ```
 
-### Testing Pattern
-```json
-{"name": "docker_test", "arguments": {"test_command": "curl -s http://localhost:8080/api.php"}}
-{"name": "docker_exec", "arguments": {"container": "todoapp-mysql", "command": "mysql -uroot -prootpass -e 'SELECT * FROM todoapp.todos'"}}
-```
+### index.html - Basic structure with login form and todo list
 
-## Quality Requirements
+### style.css - Basic CSS
 
-- All Docker images must build successfully
-- docker-compose up must start all services
-- API endpoints must respond correctly
-- Frontend must load and function
-- Test each component before committing
+### app.js - Fetch-based JS for auth and todos
 
-## Stop Condition
-
-After completing a story, call `get_next_story` again:
-- If more stories remain, implement the next one
-- If "ALL_STORIES_COMPLETE", output: `<promise>COMPLETE</promise>`
-
-## Important Reminders
-
-- **Be autonomous** - Don't wait for clarification
-- **Favor simplicity** - Working code over perfect code  
-- **Use tools** - Never hardcode or assume file contents
-- **Make progress** - Each iteration should produce commits or files
-- **Single iteration = single story** - Complete one story fully before moving on
-- **Test in Docker** - Always verify with docker_test before marking complete
+## REMEMBER:
+1. get_next_story → 2. write_file → 3. update_prd → 4. git_commit_all

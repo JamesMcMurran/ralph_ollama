@@ -674,6 +674,12 @@ class ToolExecutor:
     
     def _write_file(self, path: str, content: str) -> str:
         """Write content to a file."""
+        # SAFETY: Block writes to docker configuration files
+        forbidden_patterns = ['docker-compose.yml', 'docker-compose.yaml', '/docker/', 'Dockerfile']
+        for pattern in forbidden_patterns:
+            if pattern in path:
+                return f"Error: Cannot write to {path} - Docker files are protected. Only edit files in todo-app/src/"
+        
         file_path = self.workspace_root / path
         
         # Create parent directories if needed

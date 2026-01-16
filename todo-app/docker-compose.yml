@@ -1,0 +1,33 @@
+services:
+  mysql:
+    image: todoapp-mysql:latest
+    container_name: todoapp-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: todoapp
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-prootpass"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  php:
+    image: todoapp-php:latest
+    container_name: todoapp-php
+    volumes:
+      - ./src:/var/www/html
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  nginx:
+    image: todoapp-nginx:latest
+    container_name: todoapp-nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./src:/var/www/html
+    depends_on:
+      - php
