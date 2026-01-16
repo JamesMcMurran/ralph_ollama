@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head><title>Todo</title><link rel='stylesheet' href='style.css'></head>
+<body>
+<div class='container'>
+<h1>Todo App</h1>
+<form id='f'><input id='i' placeholder='New todo'><button>Add</button></form>
+<ul id='l'></ul>
+</div>
+<script>
+const f=document.getElementById('f'),i=document.getElementById('i'),l=document.getElementById('l');
+async function load(){const r=await fetch('api.php');const t=await r.json();l.innerHTML=t.map(x=>'<li>'+x.text+'</li>').join('');}
+f.onsubmit=async e=>{e.preventDefault();await fetch('api.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:i.value})});i.value='';load();};
+load();
+</script>
+</body>
+</html>
