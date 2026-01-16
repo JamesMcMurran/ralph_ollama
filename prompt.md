@@ -140,11 +140,122 @@ switch($method) {
 }
 ```
 
-### index.html - Basic structure with login form and todo list
+### index.html
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Todo App</h1>
+        <div id="login-section">
+            <input type="text" id="username" placeholder="Username">
+            <button onclick="doLogin()">Login</button>
+        </div>
+        <div id="todo-section" style="display:none;">
+            <p>Welcome, <span id="user-name"></span>! <button onclick="doLogout()">Logout</button></p>
+            <div class="add-todo">
+                <input type="text" id="new-todo" placeholder="New todo...">
+                <button onclick="addTodo()">Add</button>
+            </div>
+            <ul id="todo-list"></ul>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
+```
 
-### style.css - Basic CSS
+### style.css
+```css
+body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+.container { background: #f9f9f9; padding: 20px; border-radius: 8px; }
+h1 { color: #333; }
+input { padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+button:hover { background: #0056b3; }
+ul { list-style: none; padding: 0; }
+li { padding: 10px; background: white; margin: 5px 0; border-radius: 4px; display: flex; justify-content: space-between; }
+.completed { text-decoration: line-through; color: #888; }
+.delete-btn { background: #dc3545; }
+```
 
-### app.js - Fetch-based JS for auth and todos
+### app.js
+```javascript
+async function checkAuth() {
+    const res = await fetch('/login.php');
+    const data = await res.json();
+    if (data.logged_in) {
+        document.getElementById('login-section').style.display = 'none';
+        document.getElementById('todo-section').style.display = 'block';
+        document.getElementById('user-name').textContent = data.user;
+        loadTodos();
+    }
+}
+async function doLogin() {
+    const username = document.getElementById('username').value;
+    await fetch('/login.php', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({username}) });
+    checkAuth();
+}
+async function doLogout() {
+    await fetch('/login.php', { method: 'DELETE' });
+    location.reload();
+}
+async function loadTodos() {
+    const res = await fetch('/api.php');
+    const todos = await res.json();
+    const list = document.getElementById('todo-list');
+    list.innerHTML = todos.map(t => `<li class="${t.completed ? 'completed' : ''}"><span onclick="toggleTodo(${t.id}, ${t.completed})">${t.text}</span><button class="delete-btn" onclick="deleteTodo(${t.id})">X</button></li>`).join('');
+}
+async function addTodo() {
+    const input = document.getElementById('new-todo');
+    await fetch('/api.php', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({text: input.value}) });
+    input.value = '';
+    loadTodos();
+}
+async function toggleTodo(id, completed) {
+    await fetch('/api.php?id=' + id, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({completed: completed ? 0 : 1}) });
+    loadTodos();
+}
+async function deleteTodo(id) {
+    await fetch('/api.php?id=' + id, { method: 'DELETE' });
+    loadTodos();
+}
+checkAuth();
+```
+
+### AgentDocs.md
+```markdown
+# Todo App Documentation
+
+Built by Ralph autonomous agent.
+
+## API Endpoints
+- GET /api.php - List todos
+- POST /api.php - Add todo {text}
+- PUT /api.php?id=X - Update todo {text, completed}
+- DELETE /api.php?id=X - Delete todo
+
+## Auth Endpoints
+- GET /login.php - Check auth status
+- POST /login.php - Login {username}
+- DELETE /login.php - Logout
+
+## Files
+- db.php - Database connection
+- auth.php - Session management
+- todo.php - CRUD functions
+- api.php - REST API
+- login.php - Auth API
+- index.html - Frontend
+- style.css - Styles
+- app.js - JavaScript
+```
 
 ## REMEMBER:
 1. get_next_story → 2. write_file → 3. update_prd → 4. git_commit_all

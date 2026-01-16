@@ -27,11 +27,17 @@ from tools import TOOL_SCHEMAS, ToolExecutor
 from tool_parser import extract_tool_calls, deduplicate_tool_calls, has_progress_markers
 
 
-def load_prompt(script_dir: Path) -> str:
-    """Load the prompt.md file."""
-    prompt_path = script_dir / "prompt.md"
+def load_prompt(script_dir: Path, prompt_file: str = None) -> str:
+    """Load the prompt file."""
+    if prompt_file:
+        prompt_path = Path(prompt_file)
+        if not prompt_path.is_absolute():
+            prompt_path = script_dir / prompt_file
+    else:
+        prompt_path = script_dir / "prompt.md"
+    
     if not prompt_path.exists():
-        raise FileNotFoundError(f"prompt.md not found at {prompt_path}")
+        raise FileNotFoundError(f"Prompt file not found at {prompt_path}")
     return prompt_path.read_text()
 
 
@@ -143,6 +149,12 @@ def main():
         help="Run health check and exit"
     )
     
+    parser.add_argument(
+        "--prompt",
+        default=None,
+        help="Path to prompt file (default: prompt.md in script directory)"
+    )
+    
     args = parser.parse_args()
     
     # Run health check if requested
@@ -154,7 +166,7 @@ def main():
     
     # Load prompt
     try:
-        system_prompt = load_prompt(script_dir)
+        system_prompt = load_prompt(script_dir, args.prompt)
     except FileNotFoundError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1

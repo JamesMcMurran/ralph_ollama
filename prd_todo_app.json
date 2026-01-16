@@ -1,96 +1,58 @@
 {
-  "project": "TodoApp-Docker",
-  "branchName": "ralph/todo-docker",
-  "description": "Build a Todo web application using custom Docker images (Nginx, PHP, MySQL) running in Docker-in-Docker",
+  "project": "TodoApp",
+  "branchName": "ralph/todo-app",
+  "description": "Build a Todo web app. Docker is pre-configured - ONLY edit todo-app/src/ files!",
   "userStories": [
     {
       "id": "US-001",
-      "title": "Create MySQL Docker image and schema",
-      "description": "Build custom MySQL Docker image with initialization script for todos table",
+      "title": "Create database connection",
+      "description": "Create db.php with mysqli connection",
       "acceptanceCriteria": [
-        "Create todo-app/docker/mysql/Dockerfile based on mysql:8.0",
-        "Create todo-app/docker/mysql/init.sql with todos table (id, text, completed, created_at)",
-        "Build image with docker_build tool as 'todoapp-mysql:latest'",
-        "Verify image builds successfully"
+        "Create todo-app/src/db.php",
+        "Use mysqli to connect to host 'mysql', database 'todoapp', user 'root', password 'rootpass'",
+        "File must have valid PHP syntax"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": ""
+      "passes": false
     },
     {
       "id": "US-002",
-      "title": "Create PHP-FPM Docker image",
-      "description": "Build custom PHP-FPM Docker image with mysqli extension",
+      "title": "Create todo API",
+      "description": "Create api.php with CRUD endpoints",
       "acceptanceCriteria": [
-        "Create todo-app/docker/php/Dockerfile based on php:8.2-fpm",
-        "Install mysqli extension in Dockerfile",
-        "Build image with docker_build tool as 'todoapp-php:latest'",
-        "Verify image builds successfully"
+        "Create todo-app/src/api.php",
+        "Include db.php for database connection",
+        "GET: return all todos as JSON",
+        "POST: create new todo from JSON body",
+        "File must have valid PHP syntax"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": false
     },
     {
-      "id": "US-003", 
-      "title": "Create Nginx Docker image",
-      "description": "Build custom Nginx Docker image with PHP-FPM configuration",
+      "id": "US-003",
+      "title": "Create frontend",
+      "description": "Create index.html with todo UI",
       "acceptanceCriteria": [
-        "Create todo-app/docker/nginx/Dockerfile based on nginx:alpine",
-        "Create todo-app/docker/nginx/nginx.conf with PHP-FPM upstream config",
-        "Configure to serve from /var/www/html and proxy .php to php container",
-        "Build image with docker_build tool as 'todoapp-nginx:latest'",
-        "Verify image builds successfully"
+        "Create todo-app/src/index.html",
+        "Include form to add todos",
+        "Include list to display todos",
+        "Include script to fetch from api.php"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": ""
+      "passes": false
     },
     {
       "id": "US-004",
-      "title": "Create docker-compose and PHP backend",
-      "description": "Create docker-compose.yml and PHP API for CRUD operations",
+      "title": "Create styles",
+      "description": "Create style.css",
       "acceptanceCriteria": [
-        "Create todo-app/docker-compose.yml connecting all three services",
-        "Create todo-app/src/api.php with GET/POST/PUT/DELETE handlers for todos",
-        "Create todo-app/src/db.php for database connection",
-        "Mount src/ directory to containers",
-        "Verify docker_compose_up starts all services"
+        "Create todo-app/src/style.css",
+        "Style the todo list nicely",
+        "Completed todos should have strikethrough"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": ""
-    },
-    {
-      "id": "US-005",
-      "title": "Create frontend HTML/CSS/JS",
-      "description": "Create the frontend user interface for the Todo app",
-      "acceptanceCriteria": [
-        "Create todo-app/src/index.html with todo list UI",
-        "Create todo-app/src/style.css with clean styling",
-        "Create todo-app/src/app.js with fetch calls to api.php",
-        "Support add, toggle complete, and delete operations",
-        "Completed todos show strikethrough"
-      ],
-      "priority": 5,
-      "passes": false,
-      "notes": ""
-    },
-    {
-      "id": "US-006",
-      "title": "Integration test in DinD",
-      "description": "Run full integration test of the Todo app in Docker",
-      "acceptanceCriteria": [
-        "Start all services with docker_compose_up",
-        "Wait for MySQL to be ready",
-        "Test API endpoints with curl (create, list, update, delete todo)",
-        "Verify frontend loads via docker_test",
-        "Create README.md with docker-compose up instructions",
-        "All tests pass"
-      ],
-      "priority": 6,
-      "passes": false,
-      "notes": ""
+      "passes": false
     }
   ]
 }

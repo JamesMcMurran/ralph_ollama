@@ -1,0 +1,1 @@
+{"story_id":"US-001","file":"todo-app/src/db.php","code":"<?php\n$conn = new mysqli('mysql', 'root', 'rootpass', 'todoapp');\nif ($conn->connect_error) { die('Connection failed'); }\n"}
